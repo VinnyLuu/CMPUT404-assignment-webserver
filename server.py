@@ -28,32 +28,40 @@ import socketserver
 
 
 class MyWebServer(socketserver.BaseRequestHandler):
-    
-    def handle(self):
+
+    def get_data(self):
         self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
         split_data = self.data.split()
+        return split_data
+    
+    def send_file(self, filename):
+        try:
+            if filename == "/":
+                filename = "/index.html"
+
+            f = open("www" + filename)
+            
+            self.request.sendall(bytearray('HTTP/1.1 200 OK\n', 'utf-8'))
+            if filename.endswith("html"):
+                self.request.sendall(bytearray('Content-Type: text/html\n\n', 'utf-8'))
+            elif filename.endswith("css"):
+                self.request.sendall(bytearray('Content-Type: text/css\n\n', 'utf-8'))
+
+            
+            self.request.sendall(f.read().encode('utf-8'))
+
+        except FileNotFoundError as e:
+            self.request.sendall(bytearray('HTTP/1.1 404\n\n', 'utf-8'))
         
+
+    def handle(self):
+        split_data = self.get_data()
         req = split_data[0].decode('utf-8')
         requested_res = split_data[1].decode('utf-8')
 
         if req == "GET":
-            self.request.sendall(bytearray('HTTP/1.1 200 OK\n', 'utf-8'))
-
-            if requested_res == "/":
-                requested_res = "/index.html"
-
-            if requested_res.endswith("html"):
-                self.request.sendall(bytearray('Content-Type: text/html\n\n', 'utf-8'))
-            elif requested_res.endswith("css"):
-                self.request.sendall(bytearray('Content-Type: text/css\n\n', 'utf-8'))
-
-            f = open("www" + requested_res)
-            self.request.sendall(f.read().encode('utf-8'))
-
-
-        
-        
+            self.send_file(requested_res)
+  
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
