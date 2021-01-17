@@ -41,6 +41,11 @@ class MyWebServer(socketserver.BaseRequestHandler):
         if code >= 400:
             return
 
+        if code >= 300:
+            location = "Location: http://127.0.0.1:8080" + filename
+            self.request.sendall(location.encode('utf-8'))
+            return
+
         if filename.endswith("html"):
             self.request.sendall(bytearray('Content-Type: text/html\n\n', 'utf-8'))
         elif filename.endswith("css"):
@@ -57,14 +62,14 @@ class MyWebServer(socketserver.BaseRequestHandler):
             if filename.endswith("/"):
                 filename += "index.html"
 
-            elif filename.endswith("html") == False and filename.endswith("css") == False:
+            elif not filename.endswith("html") and not filename.endswith("css"):
                 filename += "/index.html"
-                code = 300
+                code = 301
+                self.send_header(code, filename)
+                return
 
             f = open("www" + filename)
-
             self.send_header(code, filename)
- 
             self.request.sendall(f.read().encode('utf-8'))
 
         except (FileNotFoundError, IsADirectoryError) as e:
