@@ -42,7 +42,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             return
 
         if code >= 300:
-            location = "Location: http://127.0.0.1:8080" + filename
+            location = "Location: http://127.0.0.1:8080" + filename + "\n\n"
             self.request.sendall(location.encode('utf-8'))
             return
 
