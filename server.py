@@ -33,25 +33,42 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.data = self.request.recv(1024).strip()
         split_data = self.data.split()
         return split_data
+
+
+    def send_header(self, code, filename):
+        status = "HTTP/1.1 " + str(code) + "\n"
+        self.request.sendall(status.encode('utf-8'))
+        if code >= 400:
+            return
+
+        if filename.endswith("html"):
+            self.request.sendall(bytearray('Content-Type: text/html\n\n', 'utf-8'))
+        elif filename.endswith("css"):
+            self.request.sendall(bytearray('Content-Type: text/css\n\n', 'utf-8'))
     
+
     def send_file(self, filename):
         try:
-            if filename == "/":
-                filename = "/index.html"
+            code = 200
+            if ".." in filename or "~" in filename:
+               self.send_header(404, filename)
+               return
+
+            if filename.endswith("/"):
+                filename += "index.html"
+
+            elif filename.endswith("html") == False and filename.endswith("css") == False:
+                filename += "/index.html"
+                code = 300
 
             f = open("www" + filename)
-            
-            self.request.sendall(bytearray('HTTP/1.1 200 OK\n', 'utf-8'))
-            if filename.endswith("html"):
-                self.request.sendall(bytearray('Content-Type: text/html\n\n', 'utf-8'))
-            elif filename.endswith("css"):
-                self.request.sendall(bytearray('Content-Type: text/css\n\n', 'utf-8'))
 
-            
+            self.send_header(code, filename)
+ 
             self.request.sendall(f.read().encode('utf-8'))
 
-        except FileNotFoundError as e:
-            self.request.sendall(bytearray('HTTP/1.1 404\n\n', 'utf-8'))
+        except (FileNotFoundError, IsADirectoryError) as e:
+            self.send_header(404, filename)
         
 
     def handle(self):
@@ -61,7 +78,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
         if req == "GET":
             self.send_file(requested_res)
-  
+        else:
+            self.send_header(405, "")
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
