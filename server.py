@@ -62,17 +62,17 @@ class MyWebServer(socketserver.BaseRequestHandler):
             if filename.endswith("/"):
                 filename += "index.html"
 
-            elif not filename.endswith("html") and not filename.endswith("css"):
-                filename += "/"
-                code = 301
-                self.send_header(code, filename)
-                return
-
             f = open("www" + filename)
             self.send_header(code, filename)
             self.request.sendall(f.read().encode('utf-8'))
 
-        except (FileNotFoundError, IsADirectoryError) as e:
+        except IsADirectoryError as e:
+            filename += "/"
+            code = 301
+            self.send_header(code, filename)
+            return
+            
+        except FileNotFoundError as e:
             self.send_header(404, filename)
         
 
@@ -80,7 +80,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         split_data = self.get_data()
         if split_data is None or len(split_data) == 0:
             return
-            
+
         req = split_data[0].decode('utf-8')
         requested_res = split_data[1].decode('utf-8')
 
