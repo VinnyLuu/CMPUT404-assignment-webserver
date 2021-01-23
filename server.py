@@ -30,9 +30,17 @@ import socketserver
 class MyWebServer(socketserver.BaseRequestHandler):
 
     def get_data(self):
-        self.data = self.request.recv(1024).strip()
-        split_data = self.data.split()
-        return split_data
+        self.data = self.request.recv(1024).strip().decode("utf-8")
+        fields = self.data.split("\r\n")
+        output = {"method" : fields[0].split()[0], "resource" : fields[0].split()[1]}
+        fields = fields[1:] #ignore the GET / HTTP/1.1
+        
+        for field in fields:
+            if not field:
+                continue
+            key,value = field.split(': ')
+            output[key] = value
+        return output
 
 
     def send_header(self, code, filename):
@@ -42,7 +50,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             return
 
         if code >= 300:
-            location = "Location: http://127.0.0.1:8080" + filename + "\n\n"
+            location = "Location: http://" + self.response_params["Host"] + filename + "\n\n"
             self.request.sendall(location.encode('utf-8'))
             return
 
@@ -70,22 +78,18 @@ class MyWebServer(socketserver.BaseRequestHandler):
             filename += "/"
             code = 301
             self.send_header(code, filename)
-            return
             
         except FileNotFoundError as e:
             self.send_header(404, filename)
         
 
     def handle(self):
-        split_data = self.get_data()
-        if split_data is None or len(split_data) == 0:
+        self.response_params = self.get_data()
+        if self.response_params is None or len(self.response_params) == 0:
             return
 
-        req = split_data[0].decode('utf-8')
-        requested_res = split_data[1].decode('utf-8')
-
-        if req == "GET":
-            self.send_file(requested_res)
+        if self.response_params["method"] == "GET":
+            self.send_file(self.response_params["resource"])
         else:
             self.send_header(405, "")
 
