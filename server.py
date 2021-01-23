@@ -31,6 +31,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
     def get_data(self):
         self.data = self.request.recv(1024).strip().decode("utf-8")
+        if self.data is None or len(self.data) == 0:
+            return {}
+            
         fields = self.data.split("\r\n")
         output = {"method" : fields[0].split()[0], "resource" : fields[0].split()[1]}
         fields = fields[1:] #ignore the GET / HTTP/1.1
