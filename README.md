@@ -24,3 +24,7 @@ examples thus some of the code is Copyright © 2001-2013 Python
 Software Foundation; All Rights Reserved under the PSF license (GPL
 compatible) http://docs.python.org/2/library/socketserver.html
 
+Collaboration and links:
+I discussed how to approach the assignment and any issues I ran into together with Justin Mah.
+https://stackoverflow.com/questions/21153262/sending-html-through-python-socket-server
+https://stackoverflow.com/questions/39090366/how-to-parse-raw-http-request-in-python-3/39090882#39090882
