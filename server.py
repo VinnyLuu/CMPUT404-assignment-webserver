@@ -63,7 +63,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 filename += "index.html"
 
             elif not filename.endswith("html") and not filename.endswith("css"):
-                filename += "/index.html"
+                filename += "/"
                 code = 301
                 self.send_header(code, filename)
                 return
@@ -78,6 +78,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
     def handle(self):
         split_data = self.get_data()
+        if split_data is None or len(split_data) == 0:
+            return
+            
         req = split_data[0].decode('utf-8')
         requested_res = split_data[1].decode('utf-8')
 
