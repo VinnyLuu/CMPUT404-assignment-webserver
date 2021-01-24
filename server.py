@@ -29,12 +29,14 @@ import socketserver
 
 class MyWebServer(socketserver.BaseRequestHandler):
 
+    # Parse request data into map with relevant entries
     def get_data(self):
         self.data = self.request.recv(1024).strip().decode("utf-8")
         if self.data is None or len(self.data) == 0:
             return {}
             
         fields = self.data.split("\r\n")
+        # init map with method and file resource of request
         output = {"method" : fields[0].split()[0], "resource" : fields[0].split()[1]}
         fields = fields[1:] #ignore the GET / HTTP/1.1
         
@@ -50,9 +52,12 @@ class MyWebServer(socketserver.BaseRequestHandler):
         status = "HTTP/1.1 " + str(code) + "\n"
         self.request.sendall(status.encode('utf-8'))
         if code >= 400:
+            # close header
+            self.request.sendall("\n".encode('utf-8'))
             return
 
         if code >= 300:
+            # redirect by putting location of resource
             location = "Location: http://" + self.response_params["Host"] + filename + "\n\n"
             self.request.sendall(location.encode('utf-8'))
             return
@@ -66,6 +71,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def send_file(self, filename):
         try:
             code = 200
+            # if requested resources has .. or ~ in path, then 404 for security
             if ".." in filename or "~" in filename:
                self.send_header(404, filename)
                return
@@ -87,6 +93,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         
 
     def handle(self):
+        # parse request
         self.response_params = self.get_data()
         if self.response_params is None or len(self.response_params) == 0:
             return
